@@ -1,0 +1,6 @@
+name: ZavaStorefront
+components:
+  - name: infra
+    path: infra
+    template: main.bicep
+    parameters: main.parameters.json
