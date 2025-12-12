@@ -3,16 +3,20 @@ using ZavaStorefront.Services;
 
 namespace ZavaStorefront.Controllers
 {
+    // 자동 변경: 주석 추가 (커밋/PR 테스트)
+    // test
     public class CartController : Controller
     {
         private readonly ILogger<CartController> _logger;
         private readonly CartService _cartService;
-
+        // test
         public CartController(ILogger<CartController> logger, CartService cartService)
         {
             _logger = logger;
             _cartService = cartService;
         }
+
+        public string teststring = "This is a test string";
 
         public IActionResult Index()
         {

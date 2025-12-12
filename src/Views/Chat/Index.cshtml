@@ -1,0 +1,170 @@
+@{
+    ViewData["Title"] = "Chat with Phi4";
+}
+
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <h1>@ViewData["Title"]</h1>
+            <p class="text-muted">Chat with the Phi4 AI model</p>
+
+            <div class="card">
+                <div class="card-body">
+                    <div id="chatDisplay" class="chat-display mb-3" style="height: 400px; overflow-y: auto; border: 1px solid #ddd; padding: 15px; background-color: #f9f9f9; border-radius: 5px;">
+                        <p class="text-muted small">Chat messages will appear here...</p>
+                    </div>
+
+                    <form id="chatForm">
+                        <div class="input-group">
+                            <input type="text" 
+                                   id="messageInput" 
+                                   class="form-control" 
+                                   placeholder="Type your message here..." 
+                                   required>
+                            <button class="btn btn-primary" type="submit" id="sendButton">
+                                <span id="sendButtonText">Send</span>
+                                <span id="sendButtonSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
+                            </button>
+                        </div>
+                    </form>
+
+                    <div id="errorAlert" class="alert alert-danger mt-3 d-none" role="alert">
+                        <strong>Error:</strong> <span id="errorMessage"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4 p-3 bg-light rounded">
+                <h6>Instructions:</h6>
+                <ul class="mb-0 small">
+                    <li>Type your message in the input field</li>
+                    <li>Click "Send" or press Enter to submit</li>
+                    <li>The Phi4 model will process your message and respond</li>
+                    <li>Chat history is displayed above</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .chat-display {
+        font-size: 14px;
+        line-height: 1.6;
+    }
+
+    .chat-message {
+        margin-bottom: 15px;
+        padding: 10px;
+        border-radius: 5px;
+    }
+
+    .chat-message.user {
+        background-color: #e3f2fd;
+        margin-left: 20px;
+        border-left: 4px solid #2196F3;
+    }
+
+    .chat-message.bot {
+        background-color: #f3e5f5;
+        margin-right: 20px;
+        border-left: 4px solid #9c27b0;
+    }
+
+    .chat-message.error {
+        background-color: #ffebee;
+        border-left: 4px solid #f44336;
+    }
+
+    .message-label {
+        font-weight: bold;
+        font-size: 12px;
+        color: #666;
+        margin-bottom: 5px;
+    }
+</style>
+
+<script>
+    document.getElementById('chatForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const messageInput = document.getElementById('messageInput');
+        const message = messageInput.value.trim();
+        
+        if (!message) {
+            return;
+        }
+
+        // Add user message to display
+        addMessageToDisplay(message, 'user');
+        messageInput.value = '';
+
+        // Disable send button and show spinner
+        const sendButton = document.getElementById('sendButton');
+        const sendButtonText = document.getElementById('sendButtonText');
+        const sendButtonSpinner = document.getElementById('sendButtonSpinner');
+        
+        sendButton.disabled = true;
+        sendButtonText.textContent = 'Sending...';
+        sendButtonSpinner.classList.remove('d-none');
+
+        // Hide error alert
+        const errorAlert = document.getElementById('errorAlert');
+        errorAlert.classList.add('d-none');
+
+        try {
+            const response = await fetch('/Chat/SendMessage', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ message: message })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                addMessageToDisplay(data.response, 'bot');
+            } else {
+                showError(data.error || 'Failed to get response from server');
+                addMessageToDisplay(data.error || 'Error: Failed to get response', 'error');
+            }
+        } catch (error) {
+            const errorMessage = error.message || 'Network error occurred';
+            showError(errorMessage);
+            addMessageToDisplay(`Error: ${errorMessage}`, 'error');
+        } finally {
+            sendButton.disabled = false;
+            sendButtonText.textContent = 'Send';
+            sendButtonSpinner.classList.add('d-none');
+            messageInput.focus();
+        }
+    });
+
+    function addMessageToDisplay(message, sender) {
+        const chatDisplay = document.getElementById('chatDisplay');
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `chat-message ${sender}`;
+        
+        const label = document.createElement('div');
+        label.className = 'message-label';
+        label.textContent = sender === 'user' ? 'You' : (sender === 'bot' ? 'Phi4' : 'System');
+        
+        const content = document.createElement('div');
+        content.textContent = message;
+        
+        messageDiv.appendChild(label);
+        messageDiv.appendChild(content);
+        chatDisplay.appendChild(messageDiv);
+        
+        // Auto-scroll to bottom
+        chatDisplay.scrollTop = chatDisplay.scrollHeight;
+    }
+
+    function showError(errorMessage) {
+        const errorAlert = document.getElementById('errorAlert');
+        const errorText = document.getElementById('errorMessage');
+        errorText.textContent = errorMessage;
+        errorAlert.classList.remove('d-none');
+    }
+</script>
