@@ -1,4 +1,6 @@
 using ZavaStorefront.Services;
+using Azure.Identity;
+using Azure.Storage.Blobs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,6 +15,17 @@ builder.Services.AddSession(options =>
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
 });
+
+// Register Azure Blob Storage client with Managed Identity
+var useManagedIdentity = bool.Parse(builder.Configuration["UseManagedIdentity"] ?? "false");
+if (useManagedIdentity && !string.IsNullOrEmpty(builder.Configuration["AzureStorageAccountUri"]))
+{
+    var storageUri = new Uri(builder.Configuration["AzureStorageAccountUri"]!);
+    var blobClient = new BlobContainerClient(
+        new Uri($"{storageUri.Scheme}://{storageUri.Host}/{builder.Configuration["AzureStorageContainer"]}"),
+        new DefaultAzureCredential());
+    builder.Services.AddSingleton(blobClient);
+}
 
 // Register application services
 builder.Services.AddHttpContextAccessor();
