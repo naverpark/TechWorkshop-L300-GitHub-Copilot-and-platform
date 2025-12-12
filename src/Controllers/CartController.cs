@@ -3,16 +3,19 @@ using ZavaStorefront.Services;
 
 namespace ZavaStorefront.Controllers
 {
+    // test
     public class CartController : Controller
     {
         private readonly ILogger<CartController> _logger;
         private readonly CartService _cartService;
-
+        // test
         public CartController(ILogger<CartController> logger, CartService cartService)
         {
             _logger = logger;
             _cartService = cartService;
         }
+
+        public string teststring = "This is a test string";
 
         public IActionResult Index()
         {
